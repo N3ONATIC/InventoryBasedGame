@@ -4,7 +4,9 @@
         "timeModule",
         "image",
         "customitem",
-        "descriptionBackgroundImage"
+        "descriptionBackgroundImage",
+        "newMus",
+        "success"
     ],
     "Lua.runtime.version": "LuaJIT",
     "Lua.workspace.library": [

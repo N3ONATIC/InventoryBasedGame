@@ -5,15 +5,19 @@ function LoadGlobalModuleScripts()
 end
 
 function Load_Game_Background()
-    Background_Image = love.graphics.newImage("Assets/inventory_background.png")
+    Background_Image = love.graphics.newImage("Assets/Sprites/inventory_background.png") 
+end
+
+function Load_Game_Buttons()
+    Button = love.graphics.newImage("Assets/Sprites/side_button.png")
 end
 
 function LoadGlobalVariables()
     ScreenWidth = love.graphics.getWidth()
     ScreenHeight = love.graphics.getHeight()
 
-    Slot = love.graphics.newImage("Assets/inventory_slot.png")
-    descriptionBackgroundImage = love.graphics.newImage("Assets/inventory_background.png")
+    Slot = love.graphics.newImage("Assets/Sprites/inventory_slot.png")
+    descriptionBackgroundImage = love.graphics.newImage("Assets/Sprites/inventory_background.png")
 
     SlotSizeX = Slot:getWidth() * 2
     SlotSizeY = Slot:getHeight() * 2
@@ -24,7 +28,6 @@ function LoadGlobalVariables()
 
     IsDescriptionShown = false
     IsAnimatingDescription = false
-    ThreadsAreRunning = 0
     ObjectHeld = nil
 
     CurrentItemName = ""
@@ -37,6 +40,14 @@ function LoadGlobalVariables()
     _G.PlayerInventory = {} -- Inventory Contains CustomItems
 end
 
+function LoadFiles()
+    DocumentsDir = love.filesystem.getUserDirectory() .. "Documents" 
+    love.filesystem.setIdentity(DocumentsDir)
+    if love.filesystem.getInfo(DocumentsDir .. "\\" .. 'InventoryGame') ~= nil then
+        success = love.filesystem.createDirectory('InventoryGame')
+    end
+end
+
 function LoadFonts()
     VCR24 = love.graphics.newFont("Assets/Fonts/VCR_OSD_MONO.ttf", 24)
     VCR22 = love.graphics.newFont("Assets/Fonts/VCR_OSD_MONO.ttf", 22)
@@ -45,9 +56,11 @@ end
 function LoadSounds()
     S_Hover = love.audio.newSource("Assets/Sounds/hardclick1.wav", "static")
     S_Click = love.audio.newSource("Assets/Sounds/hardclick2.wav", "static")
+    S_Sell = love.audio.newSource("Assets/Sounds/itemsellcoinssound.wav", "static")
 
     S_Hover:setVolume(0.2)
     S_Click:setVolume(0.5)
+    S_Sell:setVolume(0.5)
 end
 
 function UpdateTexts()
@@ -68,16 +81,20 @@ end
 function love.load()
     love.window.setFullscreen(true)
     Load_Game_Background()
+    Load_Game_Buttons()
+
     LoadGlobalModuleScripts()
     LoadGlobalVariables()
 
     LoadFonts()
     LoadSounds()
 
+    LoadFiles()
+
     for i = 1, 5 do
         for j = 1, 4 do
             local fullTable = {}
-            fullTable[1] = love.graphics.newImage("Assets/inventory_slot.png")
+            fullTable[1] = love.graphics.newImage("Assets/Sprites/inventory_slot.png")
             fullTable[2] = ScreenWidth / 1.975 - Background_Image:getWidth() + (100 * j)
             fullTable[3] = ScreenHeight / 2.6 - Background_Image:getHeight() / 2 + (100 * i)
             fullTable[4] = nil -- Is Hovered
@@ -109,6 +126,7 @@ function PrintValues()
     if Slots ~= nil and ItemOn ~= -1 and Slots[ItemOn] ~= nil and Slots[ItemOn][5] ~= nil then
         love.graphics.print(tostring(Slots[ItemOn][5].Name), 0, 30)
     end
+    love.graphics.print(tostring(success), 0, 45)
 end
 
 function love.draw()
@@ -120,6 +138,11 @@ function love.draw()
     -- Draw Background
     love.graphics.setColor(255,255,255)
     love.graphics.draw(Background_Image, ScreenWidth / 2, ScreenHeight / 2, 0,1.8, 1.4, ImageModule:ReturnImageOriginX(Background_Image), ImageModule:ReturnImageOriginY(Background_Image))
+    
+    -- Draw Buttons
+    love.graphics.draw(Button, ScreenWidth / 1.58, ScreenHeight / 1.5, 0, 0.65, 0.4, 0, Button:getHeight() / 2)
+    love.graphics.draw(Button, ScreenWidth / 1.58, ScreenHeight / 1.365, 0, 0.65, 0.4, 0, Button:getHeight() / 2)
+    -- Draw Text
     love.graphics.draw(PlayerBalanceText, ScreenWidth / 2 - (Background_Image:getWidth()) + 35, ScreenHeight / 2 - (Background_Image:getHeight() / 1.5), 0, 1, 1)
     -- Draw Slots
     for i=1,20 do
@@ -196,10 +219,6 @@ function love.mousepressed(x,y,buttonPressed)
     if buttonPressed == 1 then
         for i=1,20 do
             if Slots[i][4] == true then
-                if S_Click:isPlaying() then
-                    S_Click:stop()
-                end
-
                 S_Click:play()
                 
                 if ObjectHeld == nil then
@@ -226,12 +245,13 @@ function love.mousepressed(x,y,buttonPressed)
     elseif buttonPressed == 2 then
         for i=1,20 do
             if Slots[i][4] == true then
-                if S_Click:isPlaying() then
-                    S_Click:stop()
-                end
-
                 S_Click:play()
+                
                 if Slots[i][5] ~= nil then
+                    SellSound = S_Sell:clone()
+
+                    SellSound:play()
+
                     PlayerBalance = PlayerBalance + Slots[i][5].SellPrice
                     Slots[i][5] = nil
                 end
@@ -240,7 +260,6 @@ function love.mousepressed(x,y,buttonPressed)
             end
         end
     end
-    
 end
 
 
@@ -248,7 +267,6 @@ end
 function love.update()
     UpdateTexts()
 
-    --love.timer.sleep(1/69)
     local MouseX = love.mouse.getX()
     local MouseY = love.mouse.getY()
 
@@ -266,9 +284,6 @@ function love.update()
         Slots[i][3] - SlotSizeY/2 <= MouseY then
             -- Mouse is Hovering Over A Slot
             if Slots[i][4] == false then
-                --if S_Hover:isPlaying() then
-                    --S_Hover:stop()
-                --end
                 S_Hover:play()
             end
             Slots[i][4] = true
