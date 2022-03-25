@@ -30,6 +30,8 @@ function LoadGlobalVariables()
     CurrentItemName = ""
     CurrentItemPrice = ""
 
+    PlayerBalance = 0
+
     Slots = {}
 
     _G.PlayerInventory = {} -- Inventory Contains CustomItems
@@ -40,7 +42,16 @@ function LoadFonts()
     VCR22 = love.graphics.newFont("Assets/Fonts/VCR_OSD_MONO.ttf", 22)
 end
 
+function LoadSounds()
+    S_Hover = love.audio.newSource("Assets/Sounds/hardclick1.wav", "static")
+    S_Click = love.audio.newSource("Assets/Sounds/hardclick2.wav", "static")
+
+    S_Hover:setVolume(0.2)
+    S_Click:setVolume(0.5)
+end
+
 function UpdateTexts()
+    PlayerBalanceText = love.graphics.newText(VCR24,  {{30 / 255,1 / 255, 30 / 255}, "Money: " .. PlayerBalance})
     ItemNameDescription = love.graphics.newText(VCR24,  {{1,1,1}, CurrentItemName})
     ItemCostDescription = love.graphics.newText(VCR22,  {{238 / 255,231 / 255,23 / 255}, "Sell Price: " .. CurrentItemPrice})
 end
@@ -61,6 +72,7 @@ function love.load()
     LoadGlobalVariables()
 
     LoadFonts()
+    LoadSounds()
 
     for i = 1, 5 do
         for j = 1, 4 do
@@ -102,10 +114,13 @@ end
 function love.draw()
     -- Print Values For Test
     PrintValues()
+
+    
+
     -- Draw Background
     love.graphics.setColor(255,255,255)
     love.graphics.draw(Background_Image, ScreenWidth / 2, ScreenHeight / 2, 0,1.8, 1.4, ImageModule:ReturnImageOriginX(Background_Image), ImageModule:ReturnImageOriginY(Background_Image))
-
+    love.graphics.draw(PlayerBalanceText, ScreenWidth / 2 - (Background_Image:getWidth()) + 35, ScreenHeight / 2 - (Background_Image:getHeight() / 1.5), 0, 1, 1)
     -- Draw Slots
     for i=1,20 do
         if Slots[i][4] == true and ButtonHeld == -1 then
@@ -177,30 +192,55 @@ function love.mousereleased(key)
     ButtonHeld = -1
 end
 
-function love.mousepressed()
-    for i=1,20 do
-        if Slots[i][4] == true then
-            if ObjectHeld == nil then
+function love.mousepressed(x,y,buttonPressed)
+    if buttonPressed == 1 then
+        for i=1,20 do
+            if Slots[i][4] == true then
+                if S_Click:isPlaying() then
+                    S_Click:stop()
+                end
+
+                S_Click:play()
+                
+                if ObjectHeld == nil then
+                    if Slots[i][5] ~= nil then
+                        ObjectHeld = Slots[i][5]
+                        Slots[i][5] = nil
+                    end
+                else
+                    if Slots[i][5] == nil then
+                        Slots[i][5] = ObjectHeld
+                        ObjectHeld = nil
+                    else
+                        local temp = Slots[i][5]
+                        Slots[i][5] = ObjectHeld
+                        ObjectHeld = temp
+                        
+                        temp = nil
+                    end
+                end
+                
+                ButtonHeld = i
+            end
+        end
+    elseif buttonPressed == 2 then
+        for i=1,20 do
+            if Slots[i][4] == true then
+                if S_Click:isPlaying() then
+                    S_Click:stop()
+                end
+
+                S_Click:play()
                 if Slots[i][5] ~= nil then
-                    ObjectHeld = Slots[i][5]
+                    PlayerBalance = PlayerBalance + Slots[i][5].SellPrice
                     Slots[i][5] = nil
                 end
-            else
-                if Slots[i][5] == nil then
-                    Slots[i][5] = ObjectHeld
-                    ObjectHeld = nil
-                else
-                    local temp = Slots[i][5]
-                    Slots[i][5] = ObjectHeld
-                    ObjectHeld = temp
-                    
-                    temp = nil
-                end
+                
+                ButtonHeld = i
             end
-            
-            ButtonHeld = i
         end
-    end 
+    end
+    
 end
 
 
@@ -225,6 +265,12 @@ function love.update()
         if Slots[i][2] - SlotSizeX/2 <= MouseX and Slots[i][2] + SlotSizeX/2 >= MouseX and Slots[i][3] + SlotSizeY/2 >= MouseY and
         Slots[i][3] - SlotSizeY/2 <= MouseY then
             -- Mouse is Hovering Over A Slot
+            if Slots[i][4] == false then
+                --if S_Hover:isPlaying() then
+                    --S_Hover:stop()
+                --end
+                S_Hover:play()
+            end
             Slots[i][4] = true
             if Slots[i][5] ~= nil then
                 ItemOn = i
