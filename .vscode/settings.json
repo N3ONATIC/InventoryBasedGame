@@ -6,7 +6,8 @@
         "customitem",
         "descriptionBackgroundImage",
         "newMus",
-        "success"
+        "success",
+        "res"
     ],
     "Lua.runtime.version": "LuaJIT",
     "Lua.workspace.library": [

@@ -2,14 +2,7 @@ function LoadGlobalModuleScripts()
     ImageModule = require'Modules/ImageConversion'
     ItemModule = require'Modules/CustomItemModule'
     TimerModule = require'Modules/WaitModule'
-end
-
-function Load_Game_Background()
-    Background_Image = love.graphics.newImage("Assets/Sprites/inventory_background.png") 
-end
-
-function Load_Game_Buttons()
-    Button = love.graphics.newImage("Assets/Sprites/side_button.png")
+    ButtonModule = require'Modules/CustomButtonModule'
 end
 
 function LoadGlobalVariables()
@@ -17,7 +10,9 @@ function LoadGlobalVariables()
     ScreenHeight = love.graphics.getHeight()
 
     Slot = love.graphics.newImage("Assets/Sprites/inventory_slot.png")
-    descriptionBackgroundImage = love.graphics.newImage("Assets/Sprites/inventory_background.png")
+    DescriptionBackgroundImage = love.graphics.newImage("Assets/Sprites/inventory_background.png")
+    Button = love.graphics.newImage("Assets/Sprites/side_button.png")
+    Background_Image = love.graphics.newImage("Assets/Sprites/inventory_background.png") 
 
     SlotSizeX = Slot:getWidth() * 2
     SlotSizeY = Slot:getHeight() * 2
@@ -35,6 +30,7 @@ function LoadGlobalVariables()
 
     PlayerBalance = 0
 
+    Buttons = {}
     Slots = {}
 
     _G.PlayerInventory = {} -- Inventory Contains CustomItems
@@ -80,8 +76,6 @@ end
 
 function love.load()
     love.window.setFullscreen(true)
-    Load_Game_Background()
-    Load_Game_Buttons()
 
     LoadGlobalModuleScripts()
     LoadGlobalVariables()
@@ -95,8 +89,8 @@ function love.load()
         for j = 1, 4 do
             local fullTable = {}
             fullTable[1] = love.graphics.newImage("Assets/Sprites/inventory_slot.png")
-            fullTable[2] = ScreenWidth / 1.975 - Background_Image:getWidth() + (100 * j)
-            fullTable[3] = ScreenHeight / 2.6 - Background_Image:getHeight() / 2 + (100 * i)
+            fullTable[2] = ScreenWidth / 1.975 - Background_Image:getWidth() + (Background_Image:getWidth() / 2.65 * j)
+            fullTable[3] = ScreenHeight / 2.6 - Background_Image:getHeight() / 2.5 + (Background_Image:getWidth() / 2.5 * i)
             fullTable[4] = nil -- Is Hovered
             fullTable[5] = nil -- Is Item Added
             table.insert(Slots, #Slots+1,fullTable)
@@ -105,11 +99,6 @@ function love.load()
 
     MouseSpeed = 0
     LastMousePositionX = 0
-    
-    -- Mouse Icon ImageDatas
-    MouseIcon1 = love.image.newImageData("Assets/Crosshair/crosshair1.png")
-    MouseIcon2 = love.image.newImageData("Assets/Crosshair/crosshair2.png")
-
 
     -- Add An Item
     Potion = ItemModule:CreateItem("Red Potion")
@@ -118,6 +107,10 @@ function love.load()
     Slots[2][5] = Potion
     Potion = ItemModule:CreateItem("Green Potion")
     Slots[3][5] = Potion
+
+    -- Add Buttons
+    Buttons[1] = ButtonModule:CreateButton(Button, ScreenWidth / 1.58, ScreenHeight / 1.5, 0.65, 0.4, 0, ImageModule:ReturnImageOriginX(Button), ImageModule:ReturnImageOriginY(Button))
+    Buttons[2] = ButtonModule:CreateButton(Button, ScreenWidth / 1.58, ScreenHeight / 1.365, 0.65, 0.4, 0, ImageModule:ReturnImageOriginX(Button), ImageModule:ReturnImageOriginY(Button))
 end
 
 function PrintValues()
@@ -140,10 +133,13 @@ function love.draw()
     love.graphics.draw(Background_Image, ScreenWidth / 2, ScreenHeight / 2, 0,1.8, 1.4, ImageModule:ReturnImageOriginX(Background_Image), ImageModule:ReturnImageOriginY(Background_Image))
     
     -- Draw Buttons
-    love.graphics.draw(Button, ScreenWidth / 1.58, ScreenHeight / 1.5, 0, 0.65, 0.4, 0, Button:getHeight() / 2)
-    love.graphics.draw(Button, ScreenWidth / 1.58, ScreenHeight / 1.365, 0, 0.65, 0.4, 0, Button:getHeight() / 2)
+    for _,v in pairs(Buttons) do
+        love.graphics.draw(v.Button, v.Position.X, v.Position.Y, v.Orientation, v.Size.X, v.Size.Y, v.Origin.X, v.Origin.Y)
+    end
+
     -- Draw Text
     love.graphics.draw(PlayerBalanceText, ScreenWidth / 2 - (Background_Image:getWidth()) + 35, ScreenHeight / 2 - (Background_Image:getHeight() / 1.5), 0, 1, 1)
+    
     -- Draw Slots
     for i=1,20 do
         if Slots[i][4] == true and ButtonHeld == -1 then
@@ -157,6 +153,7 @@ function love.draw()
 
         love.graphics.draw(Slots[i][1], Slots[i][2] , Slots[i][3], 0, 2, 2, OriginX, OriginY)
 
+        -- Draw Items In Slots
         if (Slots[i][5] ~= nil) then
             local ItemOriginX = ImageModule:ReturnImageOriginX(Slots[i][5].Image)
             local ItemOriginY = ImageModule:ReturnImageOriginY(Slots[i][5].Image)
@@ -177,7 +174,7 @@ function love.draw()
     end
 
     if ItemOn ~= -1 then
-        love.graphics.draw(descriptionBackgroundImage, love.mouse.getX() + 20, love.mouse.getY() + 100, 0, 1, CurrentIndex)
+        love.graphics.draw(DescriptionBackgroundImage, love.mouse.getX() + 20, love.mouse.getY() + 100, 0, 1, CurrentIndex)
 
         if IsDescriptionShown == false then
             RunAnimation()
@@ -195,14 +192,7 @@ function love.draw()
             IsDescriptionShown = false
         end
         CurrentIndex = 0
-    end
-    --[[
-    for i=1,20 do
-        love.graphics.print(tostring(Slots[i][1]) .. " " .. Slots[i][2] .. " " .. Slots[i][3] .. " " .. tostring(Slots[i][4]), 0, (i-1)*15 .. " " .. Slots[i][5].Name)
-    end
-    ]]
-    
-    
+    end    
 end
 
 function love.keypressed(key, scancode, isrepeat)
@@ -219,7 +209,7 @@ function love.mousepressed(x,y,buttonPressed)
     if buttonPressed == 1 then
         for i=1,20 do
             if Slots[i][4] == true then
-                S_Click:play()
+                (S_Click:clone()):play()
                 
                 if ObjectHeld == nil then
                     if Slots[i][5] ~= nil then
@@ -243,14 +233,13 @@ function love.mousepressed(x,y,buttonPressed)
             end
         end
     elseif buttonPressed == 2 then
+        
         for i=1,20 do
             if Slots[i][4] == true then
-                S_Click:play()
+                (S_Click:clone()):play()
                 
                 if Slots[i][5] ~= nil then
-                    SellSound = S_Sell:clone()
-
-                    SellSound:play()
+                    (S_Sell:clone()):play()
 
                     PlayerBalance = PlayerBalance + Slots[i][5].SellPrice
                     Slots[i][5] = nil

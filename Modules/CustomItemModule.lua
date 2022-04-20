@@ -8,7 +8,7 @@ customitem = {}
     }
 
     local ItemSellPrice = {
-        ["Red Potion"] = 115,
+        ["Red Potion"] = 120,
         ["Blue Potion"] = 150,
         ["Green Potion"] = 190,
     }
