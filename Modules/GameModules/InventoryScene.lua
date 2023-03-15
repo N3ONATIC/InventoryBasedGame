@@ -1,5 +1,15 @@
 InventoryScene = {}
 
+local SceneRequest = nil
+
+function InventoryScene:RequestSceneChange()
+    if SceneRequest then
+        return SceneRequest
+    else
+        return nil
+    end
+end
+
 function LoadGlobalModuleScripts()
     ImageModule = require'Modules/ImageConversion'
     ItemModule = require'Modules/CustomItemModule'
@@ -30,7 +40,8 @@ function LoadGlobalVariables()
 
     -- Buttons
     ButtonOn = -1
-    IsButtonHeld = -1
+    IsButtonHeld = false
+    ClickableButtonOn = nil
 
     IsDescriptionShown = false
     IsAnimatingDescription = false
@@ -118,25 +129,26 @@ function InventoryScene:load()
     LastMousePositionX = 0
 
     -- Add An Item
-    Potion = ItemModule:CreateItem("Red Potion")
-    Slots[1][5] = Potion
-    Potion = ItemModule:CreateItem("Blue Potion")
-    Slots[2][5] = Potion
-    Potion = ItemModule:CreateItem("Green Potion")
-    Slots[3][5] = Potion
+    Slots[1][5] = ItemModule:CreateItem("Red Potion")
+    Slots[2][5] = ItemModule:CreateItem("Blue Potion")
+    Slots[3][5] = ItemModule:CreateItem("Green Potion")
 
     -- Add Buttons
 
     Buttons = {}
     Buttons[1] = ButtonModule:CreateButton(Button, ScreenWidth / 1.44, ScreenHeight / 1.5, 0.65, 0.4, 0, ImageModule:ReturnImageOriginX(Button), ImageModule:ReturnImageOriginY(Button), 1)
     Buttons[2] = ButtonModule:CreateButton(Button, ScreenWidth / 1.44, ScreenHeight / 1.365, 0.65, 0.4, 0, ImageModule:ReturnImageOriginX(Button), ImageModule:ReturnImageOriginY(Button), 2)
+    Buttons[3] = ButtonModule:CreateButton(Button, ScreenWidth / 1.44, ScreenHeight / 1.635, .65, .4, 0, ImageModule:ReturnImageOriginX(Button), ImageModule:ReturnImageOriginY(Button), 3)
+    Buttons[4] = ButtonModule:CreateButton(Button, ScreenWidth / 1.44, ScreenHeight / 1.770, .65, .4, 0, ImageModule:ReturnImageOriginX(Button), ImageModule:ReturnImageOriginY(Button), 4)
     -- Add Texts
-    Texts[1] = TextModule:CreateText(VCR24, Color.YELLOW ,"Foraging", Buttons[1].Position.X, Buttons[1].Position.Y, 1, 1, 0)
-    Texts[2] = TextModule:CreateText(VCR24, Color.YELLOW ,"Brewing", Buttons[2].Position.X, Buttons[2].Position.Y, 1, 1, 0)
+    Texts[1] = TextModule:CreateText(VCR24, Color.YELLOW, "Forging", Buttons[1].Position.X, Buttons[1].Position.Y, 1, 1, 0)
+    Texts[2] = TextModule:CreateText(VCR24, Color.YELLOW, "Brewing", Buttons[2].Position.X, Buttons[2].Position.Y, 1, 1, 0)
+    Texts[3] = TextModule:CreateText(VCR24, Color.YELLOW, "Mining", Buttons[3].Position.X, Buttons[3].Position.Y, 1, 1, 0)
+    Texts[4] = TextModule:CreateText(VCR24, Color.YELLOW, "Smelting", Buttons[4].Position.X, Buttons[4].Position.Y, 1, 1, 0)
 end
 
 function PrintValues()
-    love.graphics.print(ButtonOn .. " : " .. IsButtonHeld)
+    love.graphics.print(ButtonOn .. " : " .. tostring(IsButtonHeld))
     local j = 0
     for i,btn in pairs(Buttons) do
         j = i
@@ -217,19 +229,14 @@ function InventoryScene:draw()
                 love.graphics.draw(ItemCostDescription, love.mouse.getX() + 30, love.mouse.getY() + 150, 0, 1, 1)
             end)
         end
-
     else
-        if IsDescriptionShown == true then
-            IsDescriptionShown = false
-        end
+        IsDescriptionShown = false
         CurrentIndex = 0
     end
 end
 
 function InventoryScene:keypressed(key, scancode, isrepeat)
-    if key == "escape" then
-        love.event.quit()
-    end
+    
 end
 
 function InventoryScene:mousepressed(x,y,buttonPressed)
@@ -277,13 +284,13 @@ function InventoryScene:mousepressed(x,y,buttonPressed)
     end
     if ButtonOn ~= -1 then
         (S_Click:clone()):play()
-        IsButtonHeld = buttonPressed
+        IsButtonHeld = true
     end
 end
 
 function InventoryScene:mousereleased(key)
     ButtonHeld = -1
-    IsButtonHeld = -1
+    IsButtonHeld = false
 end
 
 local function doButtonTextAnimation(Button, dt, isFrontWards)
@@ -365,6 +372,11 @@ function InventoryScene:update(dt)
     buttonUpdate(MouseX, MouseY)
     if ButtonOn ~= -1 then
         doButtonTextAnimation(Buttons[ButtonOn], dt, true)
+        if IsButtonHeld then
+            if ButtonOn == 3 then
+                SceneRequest = "MiningScene"
+            end            
+        end
     else
         for i=1, #Buttons do
             doButtonTextAnimation(Buttons[i], dt, false)
