@@ -6,6 +6,9 @@ function _text:CreateText(font, colorRGB, text, PositionX, PositionY, SizeX, Siz
     texttable.Object = love.graphics.newText(font, {colorRGB, text})
     texttable.Text = text
     
+    texttable.Font = font
+    texttable.Color = colorRGB
+
     texttable.Position = {}
     
     texttable.Position.X = PositionX
@@ -24,8 +27,8 @@ function _text:CreateText(font, colorRGB, text, PositionX, PositionY, SizeX, Siz
     texttable.Size.Y = texttable.Object:getHeight()
 
     texttable.Origin = {}
-    texttable.Origin.X = texttable.Object:getWidth() / 2
-    texttable.Origin.Y = texttable.Object:getHeight() / 2
+    texttable.Origin.X = texttable.Size.X / 2
+    texttable.Origin.Y = texttable.Size.Y / 2
 
     texttable.IsHovered = false
     
@@ -41,6 +44,19 @@ end
 function _text:SetTextScale(Object, X, Y)
     Object.Size.X = X
     Object.Size.Y = Y
+end
+
+function _text:SetObjectNewText(Object, NewText)
+    Object.Object = love.graphics.newText(Object.Font, {Object.Color, NewText})
+    Object.Text = NewText
+
+    Object.Size.X = Object.Object:getWidth()
+    Object.Size.Y = Object.Object:getHeight()
+
+    Object.Origin.X = Object.Size.X / 2;
+    Object.Origin.Y = Object.Size.Y / 2;
+
+    return Object
 end
 
 return _text

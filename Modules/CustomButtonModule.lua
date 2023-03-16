@@ -1,6 +1,6 @@
 local _button = {}
 
-function _button:CreateButton(Button, PositionX, PositionY, SizeX, SizeY, Rotation, OriginX, OriginY, TextIndex) -- Button Centered
+function _button:CreateButton(Button, PositionX, PositionY, SizeX, SizeY, Rotation, OriginX, OriginY) -- Button Centered
 
     local buttontable = {}
 
@@ -26,8 +26,6 @@ function _button:CreateButton(Button, PositionX, PositionY, SizeX, SizeY, Rotati
     buttontable.Origin = {}
     buttontable.Origin.X = OriginX
     buttontable.Origin.Y = OriginY
-
-    buttontable.Text = TextIndex
 
     return buttontable
 end

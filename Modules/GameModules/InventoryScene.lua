@@ -17,6 +17,8 @@ function LoadGlobalModuleScripts()
     ButtonModule = require'Modules/CustomButtonModule'
     TextModule = require'Modules/CustomTextModule'
     Color = require'Modules/ColorModule'
+    FontModule = require'Modules/FontModule'
+    InventoryModule = require'Modules/InventoryModule'
 end
 
 function LoadGlobalVariables()
@@ -50,19 +52,19 @@ function LoadGlobalVariables()
     CurrentItemName = ""
     CurrentItemPrice = ""
 
-
-
     Texts = {}
     Buttons = {}
-    Slots = {}
 
     _G.PlayerInventory = {} -- Inventory Contains CustomItems
 end
 
 function LoadTexts()
-    PlayerBalanceText = love.graphics.newText(VCR24,  {{30 / 255,1 / 255, 30 / 255}, "Money: " .. PlayerBalance})
-    ItemNameDescription = love.graphics.newText(VCR24,  {{1,1,1}, CurrentItemName})
-    ItemCostDescription = love.graphics.newText(VCR22,  {{238 / 255,231 / 255,23 / 255}, "Sell Price: " .. CurrentItemPrice})
+---@diagnostic disable-next-line: param-type-mismatch
+    PlayerBalanceText = love.graphics.newText(FontModule:getFont("VCR22"),  {{30 / 255,1 / 255, 30 / 255}, "Money: " .. PlayerBalance})
+---@diagnostic disable-next-line: param-type-mismatch
+    ItemNameDescription = love.graphics.newText(FontModule:getFont("VCR24"),  {{1,1,1}, CurrentItemName})
+---@diagnostic disable-next-line: param-type-mismatch
+    ItemCostDescription = love.graphics.newText(FontModule:getFont("VCR22"),  {{238 / 255,231 / 255,23 / 255}, "Sell Price: " .. CurrentItemPrice})
 end
 
 function LoadFiles()
@@ -71,11 +73,6 @@ function LoadFiles()
     if love.filesystem.getInfo(DocumentsDir .. "\\" .. 'InventoryGame') ~= nil then
         success = love.filesystem.createDirectory('InventoryGame')
     end
-end
-
-function LoadFonts()
-    VCR24 = love.graphics.newFont("Assets/Fonts/VCR_OSD_MONO.ttf", 24)
-    VCR22 = love.graphics.newFont("Assets/Fonts/VCR_OSD_MONO.ttf", 22)
 end
 
 function LoadSounds()
@@ -105,46 +102,34 @@ end
 
 function InventoryScene:load()
     love.window.setFullscreen(true)
-    LoadFonts()
     LoadSounds()
     LoadFiles()
     LoadGlobalModuleScripts()
     LoadGlobalVariables()
     LoadTexts()
 
-
-    for i = 1, 5 do
-        for j = 1, 4 do
-            local fullTable = {}
-            fullTable[1] = love.graphics.newImage("Assets/Sprites/inventory_slot.png")
-            fullTable[2] = ScreenWidth / 1.975 - Background_Image:getWidth() + (Background_Image:getWidth() / 2.65 * j)
-            fullTable[3] = ScreenHeight / 2.6 - Background_Image:getHeight() / 2.5 + (Background_Image:getWidth() / 2.5 * i)
-            fullTable[4] = nil -- Is Hovered
-            fullTable[5] = nil -- Is Item Added
-            table.insert(Slots, #Slots+1,fullTable)
-        end
-    end
+    InventoryModule:LoadFirstTime()
 
     MouseSpeed = 0
     LastMousePositionX = 0
 
     -- Add An Item
-    Slots[1][5] = ItemModule:CreateItem("Red Potion")
-    Slots[2][5] = ItemModule:CreateItem("Blue Potion")
-    Slots[3][5] = ItemModule:CreateItem("Green Potion")
 
+    InventoryModule:AddItem(ItemModule:CreateItem("Red Potion"))
+    InventoryModule:AddItem(ItemModule:CreateItem("Blue Potion"))
+    InventoryModule:AddItem(ItemModule:CreateItem("Green Potion"))
     -- Add Buttons
 
     Buttons = {}
-    Buttons[1] = ButtonModule:CreateButton(Button, ScreenWidth / 1.44, ScreenHeight / 1.5, 0.65, 0.4, 0, ImageModule:ReturnImageOriginX(Button), ImageModule:ReturnImageOriginY(Button), 1)
-    Buttons[2] = ButtonModule:CreateButton(Button, ScreenWidth / 1.44, ScreenHeight / 1.365, 0.65, 0.4, 0, ImageModule:ReturnImageOriginX(Button), ImageModule:ReturnImageOriginY(Button), 2)
-    Buttons[3] = ButtonModule:CreateButton(Button, ScreenWidth / 1.44, ScreenHeight / 1.635, .65, .4, 0, ImageModule:ReturnImageOriginX(Button), ImageModule:ReturnImageOriginY(Button), 3)
-    Buttons[4] = ButtonModule:CreateButton(Button, ScreenWidth / 1.44, ScreenHeight / 1.770, .65, .4, 0, ImageModule:ReturnImageOriginX(Button), ImageModule:ReturnImageOriginY(Button), 4)
+    Buttons[1] = ButtonModule:CreateButton(Button, ScreenWidth / 2 + Background_Image:getWidth() * 1.8 / 1.7, ScreenHeight * 45 / 100, 0.65, 0.4, 0, ImageModule:ReturnImageOriginX(Button), ImageModule:ReturnImageOriginY(Button))
+    Buttons[2] = ButtonModule:CreateButton(Button, ScreenWidth / 2 + Background_Image:getWidth() * 1.8 / 1.7, ScreenHeight * 50 / 100, 0.65, 0.4, 0, ImageModule:ReturnImageOriginX(Button), ImageModule:ReturnImageOriginY(Button))
+    Buttons[3] = ButtonModule:CreateButton(Button, ScreenWidth / 2 + Background_Image:getWidth() * 1.8 / 1.7, ScreenHeight * 55 / 100, .65, .4, 0, ImageModule:ReturnImageOriginX(Button), ImageModule:ReturnImageOriginY(Button))
+    Buttons[4] = ButtonModule:CreateButton(Button, ScreenWidth / 2 + Background_Image:getWidth() * 1.8 / 1.7, ScreenHeight * 60 / 100, .65, .4, 0, ImageModule:ReturnImageOriginX(Button), ImageModule:ReturnImageOriginY(Button))
     -- Add Texts
-    Texts[1] = TextModule:CreateText(VCR24, Color.YELLOW, "Forging", Buttons[1].Position.X, Buttons[1].Position.Y, 1, 1, 0)
-    Texts[2] = TextModule:CreateText(VCR24, Color.YELLOW, "Brewing", Buttons[2].Position.X, Buttons[2].Position.Y, 1, 1, 0)
-    Texts[3] = TextModule:CreateText(VCR24, Color.YELLOW, "Mining", Buttons[3].Position.X, Buttons[3].Position.Y, 1, 1, 0)
-    Texts[4] = TextModule:CreateText(VCR24, Color.YELLOW, "Smelting", Buttons[4].Position.X, Buttons[4].Position.Y, 1, 1, 0)
+    Texts[1] = TextModule:CreateText(FontModule:getFont("VCR24"), Color.YELLOW, "Forging", Buttons[1].Position.X, Buttons[1].Position.Y, 1, 1, 0)
+    Texts[2] = TextModule:CreateText(FontModule:getFont("VCR24"), Color.YELLOW, "Brewing", Buttons[2].Position.X, Buttons[2].Position.Y, 1, 1, 0)
+    Texts[3] = TextModule:CreateText(FontModule:getFont("VCR24"), Color.YELLOW, "Mining", Buttons[3].Position.X, Buttons[3].Position.Y, 1, 1, 0)
+    Texts[4] = TextModule:CreateText(FontModule:getFont("VCR24"), Color.YELLOW, "Smelting", Buttons[4].Position.X, Buttons[4].Position.Y, 1, 1, 0)
 end
 
 function PrintValues()
@@ -155,10 +140,12 @@ function PrintValues()
         love.graphics.print("Button: " .. i .. " Left:" .. btn.Position.X - (btn.Size.X / 2) .. " Right: " .. btn.Position.X + (btn.Size.X / 2) .. " Top: " .. btn.Position.Y - (btn.Size.Y / 2) .. " Bottom: " .. btn.Position.Y + (btn.Size.Y / 2) , 0, 15 * i)
     end
     love.graphics.print(MouseX .. " : " .. MouseY, 0, (j+1) * 15)
+    love.graphics.print(tostring(Background_Image:getWidth()), 0, (j+2) * 15)
 end
 
 function InventoryScene:draw()
     -- Print Values For Test
+
     PrintValues()
 
     -- Draw Background
@@ -184,25 +171,8 @@ function InventoryScene:draw()
     end
 
     -- Draw Slots
-    for i=1,20 do
-        if Slots[i][4] == true and ButtonHeld == -1 then
-            love.graphics.setColor(255,255,255,0.85)
-        else
-            love.graphics.setColor(255,255,255, 1)
-        end
-
-        local OriginX = ImageModule:ReturnImageOriginX(Slots[i][1])
-        local OriginY = ImageModule:ReturnImageOriginY(Slots[i][1])
-
-        love.graphics.draw(Slots[i][1], Slots[i][2] , Slots[i][3], 0, 2, 2, OriginX, OriginY)
-
-        -- Draw Items In Slots
-        if (Slots[i][5] ~= nil) then
-            local ItemOriginX = ImageModule:ReturnImageOriginX(Slots[i][5].Image)
-            local ItemOriginY = ImageModule:ReturnImageOriginY(Slots[i][5].Image)
-            love.graphics.draw(Slots[i][5].Image, Slots[i][2], Slots[i][3], 0, 1.2, 1.2, ItemOriginX, ItemOriginY)
-        end
-    end
+    
+    InventoryModule:DrawSlots()
 
     if ObjectHeld then
         local ItemOriginX = ImageModule:ReturnImageOriginX(ObjectHeld.Image)
@@ -223,8 +193,9 @@ function InventoryScene:draw()
             RunAnimation()
         else
             pcall(function ()
-                CurrentItemPrice = Slots[ItemOn][5].SellPrice
-                CurrentItemName = Slots[ItemOn][5].Name
+                SL = InventoryModule:GetSlotByIndex(ItemOn)
+                CurrentItemPrice = SL.Item.SellPrice
+                CurrentItemName = SL.Item.Name
                 love.graphics.draw(ItemNameDescription, love.mouse.getX() + 27.51, love.mouse.getY() + 110, 0, 1, 1)
                 love.graphics.draw(ItemCostDescription, love.mouse.getX() + 30, love.mouse.getY() + 150, 0, 1, 1)
             end)
@@ -241,46 +212,11 @@ end
 
 function InventoryScene:mousepressed(x,y,buttonPressed)
     if buttonPressed == 1 then
-        for i=1,20 do
-            if Slots[i][4] == true then
-                (S_Click:clone()):play()
-
-                if ObjectHeld == nil then
-                    if Slots[i][5] ~= nil then
-                        ObjectHeld = Slots[i][5]
-                        Slots[i][5] = nil
-                    end
-                else
-                    if Slots[i][5] == nil then
-                        Slots[i][5] = ObjectHeld
-                        ObjectHeld = nil
-                    else
-                        local temp = Slots[i][5]
-                        Slots[i][5] = ObjectHeld
-                        ObjectHeld = temp
-
-                        temp = nil
-                    end
-                end
-
-                ButtonHeld = i
-            end
-        end
+        ButtonHeld = InventoryModule:CheckForAnyMouse1ButtonClick()
     elseif buttonPressed == 2 then
-        for i=1,20 do
-            if Slots[i][4] == true then
-                (S_Click:clone()):play()
-
-                if Slots[i][5] ~= nil then
-                    (S_Sell:clone()):play()
-
-                    PlayerBalance = PlayerBalance + Slots[i][5].SellPrice
-                    Slots[i][5] = nil
-                end
-
-                ButtonHeld = i
-            end
-        end
+        --// Unfinished
+        --// Last finishing onto implementing all slots in InventoryModule
+        ButtonHeld = InventoryModule:CheckForAnyMouse2ButtonClick(S_Click,S_Sell)
     end
     if ButtonOn ~= -1 then
         (S_Click:clone()):play()
@@ -314,26 +250,6 @@ local function doButtonTextAnimation(Button, dt, isFrontWards)
         end
     else
         text.Orientation = 0.1
-    end
-end
-
-local function slotUpdate(MouseX, MouseY)
-    for i=1, #Slots do
-        if Slots[i][2] - SlotSizeX/2 <= MouseX and Slots[i][2] + SlotSizeX/2 >= MouseX and Slots[i][3] + SlotSizeY/2 >= MouseY and
-        Slots[i][3] - SlotSizeY/2 <= MouseY then
-            -- Mouse is Hovering Over A Slot
-            if Slots[i][4] == false then
-                S_Hover:play()
-            end
-            Slots[i][4] = true
-            if Slots[i][5] ~= nil then
-                ItemOn = i
-            end
-            break
-        else
-            Slots[i][4] = false
-            ItemOn = -1
-        end
     end
 end
 
@@ -383,7 +299,7 @@ function InventoryScene:update(dt)
         end
     end
     
-    slotUpdate(MouseX, MouseY)
+    ItemOn = InventoryModule:SlotUpdate()
 end
 
 return InventoryScene

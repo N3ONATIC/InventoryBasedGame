@@ -1,7 +1,10 @@
+local ResolutionManager = require('Modules/ResolutionModule')
 local SceneManager = require('Modules/SceneManagerModule')
-local SceneForChange = nil
+local MouseModule = require('Modules/ControlModules/MouseModule')
 
+local SceneForChange = nil
 function love.load()
+    ResolutionManager:SetResolution(2)
     --// Set First Scene
     SceneManager:setScene('InventoryScene')
 
@@ -36,6 +39,9 @@ function love.update(dt)
     if SceneForChange ~= nil then
         SceneManager:setScene(SceneForChange)
         SceneForChange = nil
+        SceneManager:getScene():load()
     end
     collectgarbage()
+
+    MouseModule:Update()
 end
